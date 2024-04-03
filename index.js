@@ -1,0 +1,116 @@
+require('dotenv').config();
+
+const express = require('express');
+const bodyParser = require('body-parser');
+const { default: OpenAI } = require('openai');
+const app = express();
+const client = new OpenAI();
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+
+app.use(bodyParser.json());
+
+app.use(function(req, res, next) {
+    res.setTimeout(20000, async function() {
+        console.log('Request has timed out.');
+        res.send(408);
+    });
+
+    next();
+});
+
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});
+
+app.get('/', (req, res) => {
+    res.send('Welcome to the Nutrobo API!');
+});
+
+app.post('/v1/create-thread', async (req, res) => {
+    var threadId = (await client.beta.threads.create()).id;
+    console.log(`'AVAIS: Created thread ${threadId}'`)
+
+    await client.beta.threads.messages.create(
+        threadId,
+        {
+            role: 'assistant',
+            content: 'How may I help you today?'
+        }
+    );
+
+    await _getResponse(threadId, res);
+});
+
+app.post('/v1/send-message', async (req, res) => {
+    const body = req.body;
+
+    await client.beta.threads.messages.create(
+        body.threadId,
+        {
+            role: 'user',
+            content: body.message
+        }
+    );
+
+    await _runThread(body.threadId, res);
+});
+
+app.post('/v1/get-thread', async (req, res) => {
+    const query = req.query;
+
+    await client.beta.threads.messages.list(
+        query.threadId
+    );
+
+    await _getResponse(query.threadId, res);
+});
+
+async function _runThread(threadId, res) {
+    console.log(`'Running thread ${threadId}'`)
+    var run = await client.beta.threads.runs.create(
+        threadId,
+        { 
+            assistant_id: process.env['NUTROBO_ASST_ID'] 
+        }
+    );
+
+    var done = false;
+    while (!done) {
+        await delay(1000);
+        run = await client.beta.threads.runs.retrieve(
+            threadId,
+            run.id
+        );
+        console.log(`'Thread status ${run.status} for thread ${threadId}'`)
+        done = run.status == 'completed'
+    }
+
+    await _getResponse(threadId, res);
+}
+
+async function _getResponse(threadId, res) {
+    var messages = await client.beta.threads.messages.list(threadId)
+    var thread = await client.beta.threads.retrieve(threadId)
+    
+    var mapped = messages.body.data.map(function (m) { 
+        return {
+            id: m.id,
+            content: m.content[0].text.value,
+            createdAt: m.created_at,
+            sentBy: m.role
+        }
+    });
+
+    var response = {
+        id: threadId,
+        createdAt: thread.created_at,
+        messages: mapped
+    }
+
+    if (res) {
+        res.status(200).json(response)
+    }    
+
+    return response;
+}
