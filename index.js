@@ -56,7 +56,7 @@ app.post('/v1/send-message', async (req, res) => {
     await _runThread(body.threadId, res);
 });
 
-app.post('/v1/get-thread', async (req, res) => {
+app.get('/v1/get-thread', async (req, res) => {
     const query = req.query;
 
     await client.beta.threads.messages.list(
