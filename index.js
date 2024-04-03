@@ -49,7 +49,7 @@ app.post('/v1/send-message', async (req, res) => {
         body.threadId,
         {
             role: 'user',
-            content: body.message
+            content: body.content
         }
     );
 
