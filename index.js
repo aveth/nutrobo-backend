@@ -29,7 +29,7 @@ app.get('/', (req, res) => {
 
 app.post('/v1/create-thread', async (req, res) => {
     var threadId = (await client.beta.threads.create()).id;
-    console.log(`'AVAIS: Created thread ${threadId}'`)
+    //console.log(`'AVAIS: Created thread ${threadId}'`)
 
     await client.beta.threads.messages.create(
         threadId,
@@ -56,14 +56,14 @@ app.post('/v1/send-message', async (req, res) => {
     await _runThread(body.threadId, res);
 });
 
-app.get('/v1/get-thread', async (req, res) => {
-    const query = req.query;
+app.get('/v1/get-thread/:threadId', async (req, res) => {
+    const params = req.params;
 
     await client.beta.threads.messages.list(
-        query.threadId
+        params.threadId
     );
 
-    await _getResponse(query.threadId, res);
+    await _getResponse(params.threadId, res);
 });
 
 async function _runThread(threadId, res) {
