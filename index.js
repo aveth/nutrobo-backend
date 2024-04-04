@@ -45,6 +45,8 @@ app.post('/v1/create-thread', async (req, res) => {
 app.post('/v1/send-message', async (req, res) => {
     const body = req.body;
 
+    await _cancelRuns(body.threadId);
+
     await client.beta.threads.messages.create(
         body.threadId,
         {
@@ -68,6 +70,7 @@ app.get('/v1/get-thread/:threadId', async (req, res) => {
 
 async function _runThread(threadId, res) {
     console.log(`'Running thread ${threadId}'`)
+
     var run = await client.beta.threads.runs.create(
         threadId,
         { 
@@ -83,7 +86,15 @@ async function _runThread(threadId, res) {
             run.id
         );
         console.log(`'Thread status ${run.status} for thread ${threadId}'`)
-        done = run.status == 'completed'
+        switch (run.status) {
+            case 'completed':
+                done = true;
+                break;
+            case 'requires_action':
+                var messages = await client.beta.threads.messages.list(threadId)
+                console.log(messages);
+                break;
+        }
     }
 
     await _getResponse(threadId, res);
@@ -113,4 +124,17 @@ async function _getResponse(threadId, res) {
     }    
 
     return response;
+}
+
+async function _cancelRuns(threadId) {
+    var runs = await client.beta.threads.runs.list(threadId);
+    for (const run of runs.data) {
+        console.log(`'Cancelling run ${run.id}'`)
+        if (run.status == 'requires_action') {
+            await client.beta.threads.runs.cancel(
+                threadId,
+                run.id
+            );
+        }
+    }
 }
