@@ -6,8 +6,11 @@ const { default: OpenAI } = require('openai');
 const app = express();
 const client = new OpenAI();
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+const https = require('https');
 
 app.use(bodyParser.json());
+
+const foodSearchPath = '/v1/foods/search';
 
 app.use(function(req, res, next) {
     res.setTimeout(20000, async function() {
@@ -29,7 +32,6 @@ app.get('/', (req, res) => {
 
 app.post('/v1/create-thread', async (req, res) => {
     var threadId = (await client.beta.threads.create()).id;
-    //console.log(`'AVAIS: Created thread ${threadId}'`)
 
     await client.beta.threads.messages.create(
         threadId,
@@ -55,7 +57,7 @@ app.post('/v1/send-message', async (req, res) => {
         }
     );
 
-    await _runThread(body.threadId, res);
+    await _runThread(body.threadId, res, body.data);
 });
 
 app.get('/v1/get-thread/:threadId', async (req, res) => {
@@ -68,15 +70,18 @@ app.get('/v1/get-thread/:threadId', async (req, res) => {
     await _getResponse(params.threadId, res);
 });
 
-async function _runThread(threadId, res) {
+async function _runThread(threadId, res, data) {
     console.log(`'Running thread ${threadId}'`)
 
     var run = await client.beta.threads.runs.create(
         threadId,
         { 
-            assistant_id: process.env['NUTROBO_ASST_ID'] 
+            assistant_id: process.env['NUTROBO_ASST_ID'],
+            additional_instructions: data.join('. ')
         }
     );
+
+    console.log(run);
 
     var done = false;
     while (!done) {
@@ -85,14 +90,21 @@ async function _runThread(threadId, res) {
             threadId,
             run.id
         );
-        console.log(`'Thread status ${run.status} for thread ${threadId}'`)
+        console.log(`Thread status ${run.status} for thread ${threadId}`)
         switch (run.status) {
             case 'completed':
                 done = true;
                 break;
             case 'requires_action':
-                var messages = await client.beta.threads.messages.list(threadId)
-                console.log(messages);
+                var tool = run.required_action.submit_tool_outputs.tool_calls[0];
+                var args = JSON.parse(tool.function.arguments);
+                console.log(tool.function);
+                switch (tool.function.name) {
+                    case 'getNutrientData':
+                        await _addNutrientData(threadId, run.id, args, tool);
+                        break;
+                        
+                }
                 break;
         }
     }
@@ -129,7 +141,7 @@ async function _getResponse(threadId, res) {
 async function _cancelRuns(threadId) {
     var runs = await client.beta.threads.runs.list(threadId);
     for (const run of runs.data) {
-        console.log(`'Cancelling run ${run.id}'`)
+        console.log(`Cancelling run ${run.id}`)
         if (run.status == 'requires_action') {
             await client.beta.threads.runs.cancel(
                 threadId,
@@ -137,4 +149,31 @@ async function _cancelRuns(threadId) {
             );
         }
     }
+}
+
+async function _addNutrientData(threadId, runId, args, tool) {
+    var url = `${process.env['FDC_BASE_URL']}${foodSearchPath}?api_key=${process.env['FDC_API_KEY']}&query=${args.foodName}`;
+    console.log(url);
+    var response = await fetch(url);
+    var firstFood = (await response.json()).foods[0];
+    var output = {
+        food_name: args.foodName,
+        nutrients: firstFood.foodNutrients.map((n) => {
+            console.log(`${n.value} ${n.unit} ${n.nutrientName}`)
+            return `${n.value} ${n.unitName} ${n.nutrientName}`
+        })
+    }
+    var run = await client.beta.threads.runs.submitToolOutputs(
+        threadId,
+        runId,
+        {
+            tool_outputs: [
+                {
+                    tool_call_id: tool.id,
+                    output: JSON.stringify(output),
+                }
+            ]
+        }
+    );
+    return run;
 }

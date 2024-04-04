@@ -1,0 +1,14 @@
+name: Deploy to App Engine
+
+on:
+  push:
+    branches: [ $default-branch ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2.1.0
+            
