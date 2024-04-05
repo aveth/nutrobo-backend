@@ -119,7 +119,7 @@ async function _getResponse(threadId, res) {
     var mapped = messages.body.data.map(function (m) { 
         return {
             id: m.id,
-            content: m.content[0].text.value,
+            content: m.content.length > 0 ? m.content[0].text.value : '',
             createdAt: m.created_at,
             sentBy: m.role
         }
