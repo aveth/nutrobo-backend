@@ -77,7 +77,7 @@ async function _runThread(threadId, res, data) {
         threadId,
         { 
             assistant_id: process.env['NUTROBO_ASST_ID'],
-            additional_instructions: data.join('. ')
+            additional_instructions: data ? data.join('. ') : ''
         }
     );
 
