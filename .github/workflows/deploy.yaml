@@ -2,7 +2,8 @@ name: Deploy to App Engine
 
 on:
   push:
-    branches: [ $default-branch ]
+    branches: 
+      - main
 
 jobs:
   job_id:
@@ -11,13 +12,13 @@ jobs:
       id-token: 'write'
 
     steps:
-    - id: 'auth'
+    - id: 'gcloud auth'
       uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/11549781461/locations/global/workloadIdentityPools/nutrobo-pool/providers/nutrobo-provider'
         service_account: 'nutrobo-app@appspot.gserviceaccount.com'
 
-    - id: 'deploy'
+    - id: 'gcloud deploy'
       uses: 'google-github-actions/deploy-appengine@v2'
 
     # Example of using the output
