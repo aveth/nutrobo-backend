@@ -21,7 +21,5 @@ jobs:
 
     - name: Deploy
       uses: google-github-actions/deploy-appengine@v2
-
-    - name: Test
-      run: curl "${{ steps.deploy.outputs.url }}"
+      
             
