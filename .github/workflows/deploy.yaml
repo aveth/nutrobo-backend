@@ -5,10 +5,22 @@ on:
     branches: [ $default-branch ]
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  job_id:
+    permissions:
+      contents: 'read'
+      id-token: 'write'
 
     steps:
-      - name: Set up gcloud
-        uses: google-github-actions/setup-gcloud@v2.1.0
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        workload_identity_provider: 'projects/11549781461/locations/global/workloadIdentityPools/nutrobo-pool/providers/nutrobo-provider'
+        service_account: 'nutrobo-app@appspot.gserviceaccount.com'
+
+    - id: 'deploy'
+      uses: 'google-github-actions/deploy-appengine@v2'
+
+    # Example of using the output
+    - id: 'test'
+      run: 'curl "${{ steps.deploy.outputs.version_url }}"'
             
