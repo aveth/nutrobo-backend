@@ -6,24 +6,23 @@ on:
       - main
 
 jobs:
-  deploy_to_gcloud:
+  deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
+    
     steps:
-    - id: 'auth'
-      uses: 'google-github-actions/auth@v2'
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Deploy
+      id: deploy
+      uses: google-github-actions/deploy-appengine@v2
       with:
-        workload_identity_provider: 'projects/11549781461/locations/global/workloadIdentityPools/nutrobo-pool/providers/nutrobo-provider'
-        service_account: 'nutrobo-app@appspot.gserviceaccount.com'
+        deliverables: app.yaml cron.yaml
+        version: v1
+        project_id: ${{ secrets.GCLOUD_PRJ_ID }}
+        credentials: ${{ secrets.GCLOUD_CREDENTIALS }}
 
-    - id: 'deploy'
-      uses: 'google-github-actions/deploy-appengine@v2'
-
-    # Example of using the output
-    - id: 'test'
-      run: 'curl "${{ steps.deploy.outputs.version_url }}"'
+    - name: Test
+      run: curl "${{ steps.deploy.outputs.url }}"
             
