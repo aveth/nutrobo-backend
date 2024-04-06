@@ -14,13 +14,13 @@ jobs:
       id-token: 'write'
 
     steps:
-    - id: 'gcloud auth'
+    - id: 'auth'
       uses: 'google-github-actions/auth@v2'
       with:
         workload_identity_provider: 'projects/11549781461/locations/global/workloadIdentityPools/nutrobo-pool/providers/nutrobo-provider'
         service_account: 'nutrobo-app@appspot.gserviceaccount.com'
 
-    - id: 'gcloud deploy'
+    - id: 'deploy'
       uses: 'google-github-actions/deploy-appengine@v2'
 
     # Example of using the output
