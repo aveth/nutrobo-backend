@@ -14,14 +14,13 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
 
-    - name: Deploy
-      id: deploy
-      uses: google-github-actions/deploy-appengine@v2
+    - name: Auth
+      uses: 'google-github-actions/auth@v2'
       with:
-        deliverables: app.yaml cron.yaml
-        version: v1
-        project_id: ${{ secrets.GCLOUD_PRJ_ID }}
-        credentials: ${{ secrets.GCLOUD_CREDENTIALS }}
+        credentials_json: '${{ secrets.GOOGLE_CREDENTIALS }}'
+
+    - name: Deploy
+      uses: google-github-actions/deploy-appengine@v2
 
     - name: Test
       run: curl "${{ steps.deploy.outputs.url }}"
