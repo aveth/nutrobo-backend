@@ -12,6 +12,30 @@ app.use(bodyParser.json());
 
 const foodSearchPath = '/v1/foods/search';
 
+const nutrientKeyMap = {
+    "1003": "protein",
+    "1004": "fat",
+    "1005": "carbohydrate",
+    "1008": "energy",
+    "1079": "fiber",
+    "1087": "calcium",
+    "1089": "iron",
+    "1092": "potassium",
+    "1093": "sodium",
+    "1095": "zinc",
+    "1104": "vitaminA",
+    "1110": "vitaminD",
+    "1165": "thiamin",
+    "1166": "riboflavin",
+    "1157": "niacin",
+    "1175": "vitaminB6",
+    "1235": "addedSugar",
+    "1253": "cholesterol",
+    "1257": "transFat",
+    "1258": "saturatedFat",
+    "2000": "totalSugar"
+}
+
 app.use(function(req, res, next) {
     res.setTimeout(20000, async function() {
         console.log('Request has timed out.');
@@ -69,6 +93,64 @@ app.get('/v1/get-thread/:threadId', async (req, res) => {
 
     await _getResponse(params.threadId, res);
 });
+
+app.get('/v1/get-by-barcode/:barcode', async (req, res) => {
+    const params = req.params
+    const baseUrl = process.env['FDC_BASE_URL'];
+    const apiKey = process.env['FDC_API_KEY'];
+    const url = `${baseUrl}/v1/foods/search?api_key=${apiKey}`;
+
+    var response = await fetch(
+        url,
+        {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: params.barcode,
+                dataType: ['Branded'],
+                numberOfResultsPerPage: 1
+            })
+        }
+    );
+
+    var foods = (await response.json()).foods;
+    if (foods.length == 0) {
+        res.status(404).json({
+            "code": 404,
+            "error": "Barcode not found."
+        });
+    } else {
+        var food = foods[0];
+        var nutrs = {};
+        food.foodNutrients.forEach((n) => {
+            nutrs[nutrientKeyMap[n.nutrientId]] = {
+                code: n.nutrientId,
+                name: n.nutrientName,
+                unit: n.unitName.toLowerCase(),
+                value: n.value
+            };
+        });
+
+        res.status(200).json({
+            name: food.brandName,
+            description: food.description,
+            barcode: food.gtinUpc,
+            servingSize: {
+                value: food.servingSize,
+                unit: food.servingSizeUnit
+            },
+            totalSize: {
+                value: 100,
+                unit: 'g'
+            },
+            nutrients: nutrs
+        });
+    }
+    
+})
+
 
 async function _runThread(threadId, res, data) {
     console.log(`'Running thread ${threadId}'`)
