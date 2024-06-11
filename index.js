@@ -2,11 +2,14 @@ require('dotenv').config();
 
 const express = require('express');
 const bodyParser = require('body-parser');
-
 const fbAdmin = require('firebase-admin');
+
+var pjson = require('./package.json');
 
 const authMw = require('./src/middleware/auth');
 const timeoutMw = require('./src/middleware/timeout');
+const logMw = require('./src/middleware/log');
+
 const threadService = require('./src/services/thread');
 const userService = require('./src/services/user');
 const foodService = require('./src/services/food');
@@ -18,8 +21,10 @@ fbAdmin.initializeApp({
 });
 
 app.use(bodyParser.json());
+app.use(logMw.log());
 app.use(timeoutMw.setTimeout());
 app.use(authMw.validateToken());
+
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
@@ -27,7 +32,7 @@ app.listen(port, () => {
 });
 
 app.get('/', (req, res) => {
-    res.send('Welcome to the Nutrobo API!');
+    res.send(`Welcome to the Nutrobo API! The current version is ${pjson.version}.`);
 });
 
 app.post(
