@@ -18,7 +18,7 @@ jobs:
       uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: '${{ secrets.GCLOUD_CREDENTIAL }}'
-    
+
     - name: Bump version
       run: 'npm version $(cat package.json | jq -r '.version').${{ github.run_number }}'
 
