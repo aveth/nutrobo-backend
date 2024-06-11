@@ -20,7 +20,7 @@ jobs:
         credentials_json: '${{ secrets.GCLOUD_CREDENTIAL }}'
 
     - name: Bump version
-      run: 'npm version $(cat package.json | jq -r '.version').${{ github.run_number }}'
+      run: 'npm version $(cat package.json | jq -r \'.version\').${{ github.run_number }}'
 
     - name: Deploy
       uses: google-github-actions/deploy-appengine@v2
