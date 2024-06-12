@@ -20,7 +20,7 @@ jobs:
     - name: GCloud service account credentials
       run: |
         mkdir .secrets
-        echo "${{ secrets.NUTROBO_SERVICE_ACCOUNT }}" > .secrets/nutrobo-service-account-encoded | 
+        echo ${{ secrets.NUTROBO_SERVICE_ACCOUNT }} > .secrets/nutrobo-service-account-encoded
         base64 --decode .secrets/nutrobo-service-account-encoded > .secrets/nutrobo-service-account.json
 
     - name: Set up environment
