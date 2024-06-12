@@ -30,15 +30,5 @@ jobs:
 
     - name: Deploy to App Engine
       uses: google-github-actions/deploy-appengine@v2
-      with:
-        build_env_vars: |-
-          OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
-          OPENAI_ORG_ID=${{ secrets.OPENAI_ORG_ID }}
-          NUTROBO_ASST_ID=${{ secrets.NUTROBO_ASST_ID }}
-          FDC_API_KEY=${{ secrets.FDC_API_KEY }}
-          FDC_BASE_URL=${{ env.FDC_BASE_URL }}
-          NTRX_APP_ID=${{ secrets.NTRX_APP_ID }}
-          NTRX_API_KEY=${{ secrets.NTRX_API_KEY }}
-          NTRX_BASE_URL=${{ env.NTRX_BASE_URL }}
-      
+
             
