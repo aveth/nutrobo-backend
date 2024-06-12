@@ -20,10 +20,10 @@ jobs:
     - name: GCloud service account credentials
       run: |
         mkdir .secrets
-        echo "${{ secrets.NUTROBO_SERVICE_ACCOUNT }}" | base64 --decode > .secrets/nutrobo-service-account.json
+        echo "${{ secrets.NUTROBO_SERVICE_ACCOUNT }}" | base64 -di > .secrets/nutrobo-service-account.json
 
     - name: Set up environment
-      run: echo "${{ secrets.NUTROBO_NODE_ENV }}" | base64 --decode > .env
+      run: echo "${{ secrets.NUTROBO_NODE_ENV }}" | base64 -di > .env
 
     - name: GCloud authentication
       uses: 'google-github-actions/auth@v2'
