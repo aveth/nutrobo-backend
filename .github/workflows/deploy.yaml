@@ -18,7 +18,7 @@ jobs:
       run: 'git config --global user.email "a@aveth.com" && git config --global user.name "aveth"'
 
     - name: GCloud service account credentials
-      run: 'echo ${{ secrets.NUTROBO_SERVICE_ACCOUNT }} > ".secrets/nutrobo-service-account.json"'
+      run: '${{ secrets.NUTROBO_SERVICE_ACCOUNT }} | base64 --decode > ".secrets/nutrobo-service-account.json"'
 
     - name: GCloud authentication
       uses: 'google-github-actions/auth@v2'
