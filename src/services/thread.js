@@ -1,6 +1,7 @@
 const { default: OpenAI } = require('openai');
 const client = new OpenAI();
 const fbAdmin = require('firebase-admin');
+const foodService = require('../services/food');
 
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
@@ -70,7 +71,7 @@ module.exports = {
             var barcode = body.content
             var content = ''
         
-            var food = await _getFood(barcode);
+            var food = await foodService.getByBarcode(barcode);
             if (!food) {
                 content = `Unable to find product for barcode ${barcode}`;
             } else {

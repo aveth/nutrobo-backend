@@ -17,7 +17,7 @@ module.exports = {
         }
     },
 
-    getByBarcode: async function getByBarcode(barcode) {
+    getByBarcode: async function(barcode) {
         await _getByBarcode(barcode)
     }
 }
