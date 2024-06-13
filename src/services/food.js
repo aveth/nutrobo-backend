@@ -1,6 +1,6 @@
 module.exports = {
     get: function() {
-        return async (req, res) => {
+        return async (req, res) => {f
             var params = req.params;
         
             var food = await _getByBarcode(params.barcode);
@@ -158,6 +158,8 @@ function _mapNtrxFoodData(food, barcode) {
         source: 'ntrx',
         barcode: barcode,
         servingSize: {
+            id: 'serving_size',
+            name: 'Serving Size',
             value: food.serving_weight_grams,
             unit: 'g'
         },
