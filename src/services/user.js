@@ -26,7 +26,7 @@ module.exports = {
 async function _validateUserId(res) {
     if (!res.locals.uid) {
         res.status(401).json({
-            code: 401,
+            code: 400,
             error: "Unable to get user ID"
         }); 
         return false;

@@ -28,9 +28,11 @@ app.use(authMw.validateToken());
 
 const port = process.env.PORT || 3000;
 
-process.on('uncaughtException', function(err) {
-    console.log(`Unhandled exception: ${err}`);
-});
+if (process.env.NODE_ENV == 'prod') {
+    process.on('uncaughtException', function(err) {
+        console.log(`Unhandled exception: ${err}`);
+    });
+}
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);

@@ -244,7 +244,7 @@ async function _getResponse(threadId, res, status) {
 async function _validateThread(threadId, res) {
     if (!threadId || !res.locals.uid) {
         res.status(401).json({
-            code: 401,
+            code: 400,
             error: "Unable to get thread ID or user ID"
         }); 
         return false;

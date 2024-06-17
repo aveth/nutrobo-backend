@@ -1,6 +1,6 @@
 module.exports = {
     get: function() {
-        return async (req, res) => {f
+        return async (req, res) => {
             var params = req.params;
         
             var food = await _getByBarcode(params.barcode);
@@ -110,7 +110,7 @@ function _mapFdcFoodData(food) {
         try {
             var number = parseInt(n.nutrientNumber);
             nutrs[_nutrientKeyMap[number]] = {
-                id: number,
+                id: `${number}`,
                 name: n.nutrientName,
                 unit: n.unitName.toLowerCase(),
                 value: n.value
@@ -123,12 +123,14 @@ function _mapFdcFoodData(food) {
     console.log(food);
 
     var normalizedFood = {
-        id: food.fdcId,
+        id: `${food.fdcId}`,
         foodName: food.description,
         brandName: food.brandName,
         source: 'fdc',
         barcode: food.gtinUpc,
         servingSize: {
+            id: 'serving_size',
+            name: 'Serving Size',
             value: food.servingSize,
             unit: food.servingSizeUnit
         },
@@ -141,9 +143,10 @@ function _mapFdcFoodData(food) {
 function _mapNtrxFoodData(food, barcode) {
     var nutrs = {};
     food.full_nutrients.forEach((n) => {
-        nutrs[_nutrientKeyMap[n.attr_id]] = {
-            id: n.attr_id,
-            name: n.nutrientName,
+        const name = _nutrientKeyMap[n.attr_id];
+        nutrs[name] = {
+            id: `${n.attr_id}`,
+            name: name,
             unit: 'g',
             value: n.value
         };
@@ -165,6 +168,8 @@ function _mapNtrxFoodData(food, barcode) {
         },
         nutrients: nutrs
     }
+
+    console.log(normalizedFood);
 
     return normalizedFood;
 }
