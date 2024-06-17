@@ -64,19 +64,22 @@ module.exports = {
 
     sendBarcode: function() {
         return async (req, res) => {
-            const body = req.body;
-            const params = req.params;
+            const { body, params } = req;
+
             if (!await _validateThread(params.threadId, res)) return;
 
-            var barcode = body.content
-            var content = ''
+            const barcode = body.content;
         
             var food = await foodService.getByBarcode(barcode);
             if (!food) {
-                content = `Unable to find product for barcode ${barcode}`;
-            } else {
-                content = await _getFoodMessage(food);
+                res.status(404).json({
+                    code: 404,
+                    message: 'Barcode not found'
+                });
+                return;
             } 
+            
+            const content = await _getFoodMessage(food);
         
             await _runThread({
                 threadId: params.threadId, 
@@ -90,11 +93,11 @@ module.exports = {
 
     sendNutritionInfo: function() {
         return async (req, res) => {
-            const body = req.body;
-            const params = req.params;
+            const { body, params } = req;
+            
             _validateThread(params.threadId, res);
 
-            var info = body.content;
+            const info = body.content;
             
             await _runThread({
                 threadId: params.threadId, 
@@ -244,7 +247,7 @@ async function _getResponse(threadId, res, status) {
 async function _validateThread(threadId, res) {
     if (!threadId || !res.locals.uid) {
         res.status(401).json({
-            code: 401,
+            code: 400,
             error: "Unable to get thread ID or user ID"
         }); 
         return false;
