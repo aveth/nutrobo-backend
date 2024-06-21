@@ -113,14 +113,12 @@ function _mapFdcFoodData(food) {
                 id: `${number}`,
                 name: n.nutrientName,
                 unit: n.unitName.toLowerCase(),
-                value: n.value
+                value: Math.round(n.value * (food.servingSize / 100))
             };
         } catch (e) {
             console.log(e);
         }
     });
-
-    console.log(food);
 
     var normalizedFood = {
         id: `${food.fdcId}`,
@@ -152,8 +150,6 @@ function _mapNtrxFoodData(food, barcode) {
         };
     });
 
-    console.log(food);
-
     var normalizedFood = {
         id: food.nix_item_id,
         foodName: food.food_name,
@@ -168,8 +164,6 @@ function _mapNtrxFoodData(food, barcode) {
         },
         nutrients: nutrs
     }
-
-    console.log(normalizedFood);
 
     return normalizedFood;
 }

@@ -74,6 +74,11 @@ app.get(
 
 app.get(
     '/v1/user/get-profile', 
-    userService.getProfile()
+    userService.get()
+);
+
+app.put(
+    '/v1/user/update-profile', 
+    userService.update()
 );
 

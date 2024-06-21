@@ -17,9 +17,8 @@ module.exports = {
                 if (data.threads) {
                     threads.push(...data.threads);
                 }
-                await docRef.set({
-                    threads: threads
-                });
+                data.threads = threads;
+                await docRef.set(data);
             }
         
             await client.beta.threads.messages.create(
@@ -74,7 +73,7 @@ module.exports = {
             if (!food) {
                 res.status(404).json({
                     code: 404,
-                    message: 'Barcode not found'
+                    message: 'Barcode not found.'
                 });
                 return;
             } 
@@ -97,47 +96,32 @@ module.exports = {
             
             _validateThread(params.threadId, res);
 
-            const info = body.content;
-            
-            await _runThread({
-                threadId: params.threadId, 
-                res: res, 
-                content: _getNutritionInfoMessage(info),
-                data: body.data
-            });
+            await client.beta.threads.messages.create(
+                params.threadId,
+                {
+                    role: 'assistant',
+                    content: await _getNutritionInfoMessage(body, res)
+                }
+            );
+        
+            await _getResponse(params.threadId, res, 201);
         }
     }
     
 }
 
+async function _getNutritionInfoMessage(food, res) {
+    const netCarbs = food.nutrients.carbohydrate.value - food.nutrients.fiber.value
+    const docRef = fbAdmin.firestore().collection('users').doc(res.locals.uid);
+    const ratio = (await docRef.get()).data().profile.icRatio;
+    var text = `You will need insulin for ${netCarbs} g of carbs (${food.nutrients.carbohydrate.value} g of total carbs - ${food.nutrients.fiber.value} g of fiber). `
+    if (ratio) {
+        const insulin = ratio.split(':')[0];
+        const carbs = ratio.split(':')[1];
+        text += `With an insulin-to-carbohydrate ratio of ${ratio}, you will need ${(netCarbs / carbs) * insulin} unit(s) of insulin.`
+    }
 
-async function _getFoodMessage(food) {
-    var content = 'Calculating insulin dose for:';
-    content += `\nFood name: ${food.brandName} ${food.foodName}`;
-    content += `\nServing size: ${food.servingSize.value} ${food.servingSize.unit}`;
-    content += `\nNutrition info:`;
-    content += `\n - Carbohydrate: ${food.nutrients.carbohydrate.value}${food.nutrients.carbohydrate.unit}`;
-    content += `\n - Fiber: ${food.nutrients.fiber.value}${food.nutrients.fiber.unit}`;
-    content += `\n - Protein: ${food.nutrients.protein.value}${food.nutrients.protein.unit}`;
-    
-    return content;
-}
-
-function _getNutritionInfoMessage(info) {
-    var content = 'Calculating insulin dose for:';
-    console.log(info);
-
-    var servingMatch = info.match(/(Per \d .* \(\d+ g\))/);
-    var carbMatch = info.match(/(Carbohydrate\s*?\/\s*?Glucides\s*?\d+\s*?[g|9])/);
-    var fiberMatch = info.match(/(Fibre\s*?\/\s*?Fibres\s*?\d+\s*?[g|9])/);
-    var proteinMatch = info.match(/(Protein\s*?\/\s*?Protéines\s*?\d+[s*?g|9])/);
-    
-    if (servingMatch) content += `\nServing size: ${servingMatch[0]}`;
-    if (carbMatch) content += `\n - ${carbMatch[0]}`;
-    if (fiberMatch) content += `\n - ${fiberMatch[0]}`;
-    if (proteinMatch) content += `\n - ${proteinMatch[0]}`;
-    
-    return content;
+    return text;
 }
 
 async function _cancelRuns(threadId) {
@@ -156,7 +140,6 @@ async function _runThread(options) {
     var threadId = options.threadId;
     var content = options.content;
     var data = options.data;
-    var isAssistant = options.isAssistant ?? false;
     var res = options.res;
 
     if (!content) {
@@ -170,18 +153,17 @@ async function _runThread(options) {
     await _cancelRuns(threadId);
 
     console.log(`Creating message ${content}`);
-
+    
     await client.beta.threads.messages.create(
         threadId,
         {
-            role: isAssistant ? 'assistant' : 'user',
+            role: 'user',
             content: content
         }
     );
 
     console.log(`Running thread ${threadId} with data ${data}`);
     
-
     var run = await client.beta.threads.runs.create(
         threadId,
         { 
@@ -248,21 +230,31 @@ async function _validateThread(threadId, res) {
     if (!threadId || !res.locals.uid) {
         res.status(401).json({
             code: 400,
-            error: "Unable to get thread ID or user ID"
+            error: "Unable to get thread ID or user ID."
         }); 
         return false;
     } else {
         const id = res.locals.uid;
         const doc = await fbAdmin.firestore().collection('users').doc(id).get();
-        const found = doc.data().threads.find((thread) => thread == threadId);
-        if (doc.exists && !found) {
-            res.status(401).json({
-                code: 401,
-                error: "The provided threadId does not belong to this user"
-            });
-            return false;
+        const threads = doc.data().threads
+        if (threads) {
+            const found = threads.find((thread) => thread == threadId);
+            if (doc.exists && !found) {
+                res.status(401).json({
+                    code: 401,
+                    error: "The provided threadId does not belong to this user."
+                });
+                return false;
+            } else {
+                return true;
+            }
         } else {
-            return true;
+            res.status(400).json({
+                code: 400,
+                error: "This user has no threads."
+            });
+            return false
         }
+        
     }
 }
