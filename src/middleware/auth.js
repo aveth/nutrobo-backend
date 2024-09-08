@@ -3,7 +3,9 @@ const fbAdmin = require('firebase-admin');
 module.exports = {
     validateToken: function() { 
         return async function(req, res, next) {
-            if (!req.headers.authorization) {
+            if (req.url == '/' || req.url == '/favicon.ico') {
+                next();
+            } else if (!req.headers.authorization) {
                 res.status(401).json({
                     code: 401,
                     error: "Missing Authorization header"
@@ -24,7 +26,7 @@ module.exports = {
 }
 
 function _handleBearerAuth(req, res, next) {
-    const token = req.headers.authorization.split(' ')[1];                
+    const token = req.headers.authorization.split(' ')[1]; 
     fbAdmin.auth()
         .verifyIdToken(token)
         .then((decodedToken) => {

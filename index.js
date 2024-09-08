@@ -4,7 +4,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fbAdmin = require('firebase-admin');
 
-var pjson = require('./package.json');
+const pjson = require('./package.json');
 
 const authMw = require('./src/middleware/auth');
 const timeoutMw = require('./src/middleware/timeout');
@@ -39,7 +39,12 @@ app.listen(port, () => {
 });
 
 app.get('/', (req, res) => {
-    res.send(`Welcome to the Nutrobo API! The current version is ${pjson.version}.`);
+    res.status(200).json({
+        title: 'Nutrobo API',
+        apiVersion: pjson.version,
+        nodeVersion: process.version,
+        env: process.env.NODE_ENV
+    });
 });
 
 app.post(

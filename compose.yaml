@@ -1,0 +1,11 @@
+services:
+  backend-dev:
+    image: node:latest
+    working_dir: /home
+    volumes:
+      - .:/home
+    ports:
+      - 3000:3000
+    command: npm run dev
+
+    
